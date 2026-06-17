@@ -1,0 +1,364 @@
+/**
+ * Koneek - Settings Page Styles
+ *
+ * Compact card-based layout for the plugin settings page. Each connection is an
+ * independent card with its own Test / Save / Remove controls.
+ *
+ * @package Koneek
+ */
+
+.koneek_settings_wrap {
+	max-width: 840px;
+	margin: 12px 16px 16px 0;
+}
+
+.koneek_header {
+	margin-bottom: 14px;
+}
+
+.koneek_title {
+	font-size: 21px;
+	font-weight: 600;
+	color: #1e1e1e;
+	margin: 0;
+	line-height: 1.3;
+}
+
+.koneek_subtitle {
+	margin: 4px 0 0;
+	font-size: 12.5px;
+	color: #646970;
+	max-width: 620px;
+}
+
+/* Card list is a responsive grid; collapsed tiles flow side by side, while an
+   expanded card spans the whole row. */
+.koneek_connections {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 10px;
+	align-items: start;
+}
+
+/* Card */
+.koneek_card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	overflow: hidden;
+}
+
+/* An expanded card always takes a full row of the grid. */
+.koneek_connection:not(.koneek_collapsed) {
+	grid-column: 1 / -1;
+}
+
+.koneek_unsaved {
+	border-style: dashed;
+	border-color: #c3c4c7;
+}
+
+/* Card header: collapse toggle (caret + priority + name/model) + remove */
+.koneek_card_header {
+	padding: 10px 12px;
+	border-bottom: 1px solid #f0f0f0;
+	background: #fafafa;
+}
+
+.koneek_collapsed .koneek_card_header {
+	border-bottom: none;
+	background: #fff;
+}
+
+/* In the collapsed tile state, hide the Remove button so the tile stays clean;
+   it's available again once the card is expanded. */
+.koneek_collapsed .koneek_button_remove {
+	display: none;
+}
+
+.koneek_connection_header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.koneek_collapse_toggle {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	flex: 1;
+	min-width: 0;
+	background: none;
+	border: none;
+	padding: 2px 0;
+	margin: 0;
+	cursor: pointer;
+	text-align: left;
+}
+
+.koneek_caret {
+	flex: 0 0 auto;
+	width: 0;
+	height: 0;
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-top: 6px solid #646970;
+	transition: transform 0.15s ease;
+}
+
+.koneek_collapsed .koneek_caret {
+	transform: rotate(-90deg);
+}
+
+.koneek_priority_badge {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 6px;
+	font-size: 11px;
+	font-weight: 700;
+	color: #1d2327;
+	background: #f0f0f1;
+	border: 1px solid #dcdcde;
+	border-radius: 11px;
+}
+
+.koneek_priority_label {
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+	color: #646970;
+}
+
+.koneek_input_priority {
+	width: 56px;
+	max-width: 56px;
+	padding: 3px 6px;
+	text-align: center;
+}
+
+/* Name + model stacked text inside the toggle. */
+.koneek_toggle_text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 1.3;
+}
+
+.koneek_connection_title {
+	min-width: 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: #1e1e1e;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.koneek_connection_subtitle {
+	min-width: 0;
+	font-size: 11.5px;
+	color: #787c82;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* The subtitle (model) is only useful in the compact tile view. */
+.koneek_connection:not(.koneek_collapsed) .koneek_connection_subtitle {
+	display: none;
+}
+
+.koneek_button_remove {
+	flex: 0 0 auto;
+	color: #b32d2e;
+	font-size: 12px;
+	cursor: pointer;
+	background: none;
+	border: none;
+	padding: 0;
+}
+
+.koneek_button_remove:hover {
+	color: #a00;
+	text-decoration: underline;
+}
+
+.koneek_button_remove:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* Collapsible region */
+.koneek_collapsed .koneek_card_collapsible {
+	display: none;
+}
+
+/* Name + inline priority row */
+.koneek_field_name_priority {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.koneek_field_name_priority .koneek_input_name {
+	flex: 1;
+	min-width: 0;
+}
+
+.koneek_priority_inline {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* Card body */
+.koneek_card_body {
+	padding: 12px;
+}
+
+.koneek_field_row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.koneek_field_row:last-child {
+	margin-bottom: 0;
+}
+
+.koneek_field_label {
+	flex: 0 0 96px;
+	font-size: 12.5px;
+	font-weight: 500;
+	color: #1e1e1e;
+}
+
+.koneek_field_input {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Inputs */
+.koneek_input,
+.koneek_select {
+	width: 100%;
+	max-width: 100%;
+	padding: 5px 9px;
+	font-size: 13px;
+	line-height: 1.4;
+	color: #2c3338;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	box-sizing: border-box;
+}
+
+.koneek_input:focus,
+.koneek_select:focus {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+	outline: none;
+}
+
+.koneek_input_priority,
+.koneek_input_timeout {
+	padding: 3px 6px;
+}
+
+.koneek_input_timeout {
+	width: 90px;
+	max-width: 90px;
+}
+
+.koneek_select {
+	cursor: pointer;
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23555' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 9px center;
+	padding-right: 26px;
+}
+
+.koneek_model_dropdown_wrap + .koneek_custom_model_wrap {
+	margin-top: 6px;
+}
+
+/* Card footer: test + save + status */
+.koneek_card_footer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	border-top: 1px solid #f0f0f0;
+	background: #fafafa;
+}
+
+.koneek_card_footer .button {
+	font-size: 12.5px;
+}
+
+.koneek_card_status {
+	font-size: 12px;
+	margin-left: 2px;
+	flex: 1;
+	min-width: 0;
+}
+
+.koneek_spinner {
+	visibility: hidden;
+}
+
+.koneek_spinner.is-active {
+	visibility: visible;
+}
+
+/* Actions row (Add Provider) */
+.koneek_actions_row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-top: 14px;
+}
+
+.koneek_button_add {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.koneek_add_icon {
+	font-weight: 700;
+	font-size: 15px;
+	line-height: 1;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+	.koneek_field_row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 4px;
+	}
+
+	.koneek_field_label {
+		flex: none;
+	}
+
+	.koneek_card_footer {
+		flex-wrap: wrap;
+	}
+
+	.koneek_card_status {
+		flex-basis: 100%;
+	}
+}
