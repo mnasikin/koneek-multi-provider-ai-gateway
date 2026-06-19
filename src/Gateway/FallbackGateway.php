@@ -94,6 +94,7 @@ class FallbackGateway {
 
 		$path   = (string) wp_parse_url( $url, PHP_URL_PATH );
 		$family = ChatTranslator::detectFamily( $url, $path );
+		$is_koneek_request = false !== strpos( $url, 'koneek_gateway=1' );
 
 		if ( null === $family ) {
 			return $preempt;
@@ -110,7 +111,7 @@ class FallbackGateway {
 		// Synthetic model listing so the SDK recognizes text-generation support,
 		// but only for a family we actually manage a connection for.
 		if ( ChatTranslator::isModelListing( $path ) ) {
-			if ( ! $this->managesFamily( $connections, $family ) ) {
+			if ( ! $is_koneek_request && ! $this->managesFamily( $connections, $family ) ) {
 				return $preempt;
 			}
 			return $this->modelListingResponse( $family );
@@ -139,6 +140,32 @@ class FallbackGateway {
 				$usable[] = $connection;
 			}
 		}
+
+		if ( ! empty( $usable ) ) {
+			return $usable;
+		}
+
+		$connector_key = (string) get_option( 'connectors_ai_koneek_api_key', '' );
+		if ( '' === $connector_key ) {
+			return $usable;
+		}
+
+		$connections = $this->repository->allWithoutKeys();
+		if ( ! empty( $connections ) ) {
+			$usable[] = $connections[0]->withApiKey( $connector_key );
+			return $usable;
+		}
+
+		$usable[] = new Connection(
+			'koneek_connector',
+			'openai',
+			1,
+			'gpt-4o',
+			'',
+			0,
+			$connector_key,
+			'Koneek Connector'
+		);
 
 		return $usable;
 	}

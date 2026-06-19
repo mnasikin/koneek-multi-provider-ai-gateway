@@ -32,9 +32,11 @@ class KoneekOpenAiModelMetadataDirectory extends AbstractOpenAiCompatibleModelMe
 	 * {@inheritDoc}
 	 */
 	protected function createRequest( HttpMethodEnum $method, string $path, array $headers = array(), $data = null ): Request {
+		$url = add_query_arg( 'koneek_gateway', '1', KoneekOpenAiProvider::url( $path ) );
+
 		return new Request(
 			$method,
-			KoneekOpenAiProvider::url( $path ),
+			$url,
 			$headers,
 			$data
 		);
