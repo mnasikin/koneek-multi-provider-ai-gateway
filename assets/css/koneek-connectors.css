@@ -1,0 +1,28 @@
+.connector-item--koneek .koneek-connector-summary {
+	padding-left: 56px;
+}
+
+.connector-item--koneek .koneek-connector-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.connector-item--koneek .koneek-connector-list li {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	color: #1e1e1e;
+	font-size: 12px;
+	line-height: 20px;
+	padding: 2px 8px;
+}
+
+@media (max-width: 480px) {
+	.connector-item--koneek .koneek-connector-summary {
+		padding-left: 0;
+	}
+}

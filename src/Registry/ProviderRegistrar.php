@@ -72,7 +72,7 @@ class ProviderRegistrar {
 	 * @var array<string, class-string>
 	 */
 	private const INTERNAL_PROVIDER_MAP = array(
-		'openai' => KoneekOpenAiProvider::class,
+		'koneek' => KoneekOpenAiProvider::class,
 	);
 
 	/**
@@ -98,10 +98,27 @@ class ProviderRegistrar {
 	 * @return void
 	 */
 	public function register(): void {
+		// Register Koneek as its own connector even before a connection is saved.
+		$this->registerProviderWithAiClient( 'koneek' );
+		$this->approveConnectorForAiPlugin( 'koneek' );
+		$this->clearPendingApprovals( 'koneek' );
+
 		$connections = $this->repository->all();
 
 		if ( empty( $connections ) ) {
 			return;
+		}
+
+		$primary = null;
+		foreach ( $connections as $connection ) {
+			if ( '' !== $connection->getApiKey() ) {
+				$primary = $connection;
+				break;
+			}
+		}
+
+		if ( null !== $primary ) {
+			$this->hookConnectorKeyFilter( 'connectors_ai_koneek_api_key', $primary->getApiKey() );
 		}
 
 		// First connection (by priority) for each connector supplies its key.

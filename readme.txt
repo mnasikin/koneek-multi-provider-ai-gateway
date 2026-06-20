@@ -2,9 +2,8 @@
 Contributors: silversh
 Tags: connector, ai connector, wordpress ai, openai compatible, ai
 Requires at least: 7.0
-Requires Plugins: ai
 Tested up to: 7.0
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 Requires PHP: 7.4
 License: AGPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/agpl-3.0.html
@@ -133,6 +132,14 @@ The terms of service and privacy policy depend on the specific third-party servi
 
 == Changelog ==
 
+= 2.2.0 =
+
+* Added Koneek as a standalone WordPress AI Connector with its own provider identity and connector logo.
+* Removed the hard dependency on the AI plugin while retaining compatibility with its editor features.
+* Added a Connectors screen summary for all saved Koneek connections with direct access to Koneek settings.
+* Added Koneek connector credentials and preferred-model integration for reliable AI feature detection.
+* Improved model discovery and fallback routing across OpenAI, Anthropic, Google, and OpenAI-compatible connections.
+
 = 2.1.0 =
 
 * Fix Koneek that still relying on  the separate OpenAI provider plugin.
@@ -157,6 +164,8 @@ The terms of service and privacy policy depend on the specific third-party servi
 * Added cross-provider fallback via an automatic OpenAI/Anthropic/Google request and response translation layer.
 * Added per-connection request timeout.
 
-= 2.1.0 =
+== Upgrade Notice ==
 
-* Fix Koneek that still relying on  the separate OpenAI provider plugin.
+= 2.2.0 =
+
+Koneek now works as a standalone AI Connector without requiring a separate provider plugin. This release also improves AI feature detection, model discovery, fallback routing, and connection management from the Koneek settings page.

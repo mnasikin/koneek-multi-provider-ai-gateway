@@ -55,15 +55,19 @@ class KoneekOpenAiProvider extends AbstractApiProvider {
 	 */
 	protected static function createProviderMetadata(): ProviderMetadata {
 		$args = array(
-			'openai',
-			'Koneek OpenAI Compatible',
+			'koneek',
+			'Koneek',
 			ProviderTypeEnum::cloud(),
-			admin_url( 'options-general.php?page=koneek-multi-provider-ai-gateway' ),
+			admin_url( 'options-general.php?page=koneek_settings' ),
 			RequestAuthenticationMethod::apiKey(),
 		);
 
 		if ( version_compare( AiClient::VERSION, '1.2.0', '>=' ) ) {
-			$args[] = __( 'Text generation through Koneek configured OpenAI-compatible providers.', 'koneek-multi-provider-ai-gateway' );
+			$args[] = __( 'Connect WordPress to OpenAI, Anthropic, Google, and OpenAI-compatible providers through Koneek.', 'koneek-multi-provider-ai-gateway' );
+		}
+
+		if ( version_compare( AiClient::VERSION, '1.3.0', '>=' ) ) {
+			$args[] = dirname( __DIR__, 3 ) . '/assets/images/koneek_icon.svg';
 		}
 
 		return new ProviderMetadata( ...$args );
