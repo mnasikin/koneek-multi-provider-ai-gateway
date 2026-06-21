@@ -82,6 +82,7 @@ class Plugin {
 		add_action( 'admin_enqueue_scripts', array( $this->settings_page, 'enqueueScripts' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueueConnectorsIntegration' ), 20 );
 		add_filter( 'script_module_data_koneek-connectors-admin', array( $this, 'filterConnectorsModuleData' ) );
+		add_filter( 'script_module_data_ai-wp-admin', array( $this, 'filterAiAdminModuleData' ), 20 );
 
 		// Register the per-card save/delete AJAX handlers unconditionally so they
 		// are available during admin-ajax.php requests.
@@ -171,6 +172,29 @@ class Plugin {
 				'connectorsUrl' => admin_url( 'options-connectors.php' ),
 			)
 		);
+	}
+
+	/**
+	 * Reports Koneek credentials to the AI plugin settings module.
+	 *
+	 * The AI settings screen reads these module-data flags directly instead of
+	 * the global provider data used by editor features.
+	 *
+	 * @param array<string, mixed> $data Existing AI settings module data.
+	 * @return array<string, mixed> Module data with Koneek availability applied.
+	 */
+	public function filterAiAdminModuleData( array $data ): array {
+		if (
+			! $this->repository->hasUsableConnection()
+			&& '' === (string) get_option( 'connectors_ai_koneek_api_key', '' )
+		) {
+			return $data;
+		}
+
+		$data['hasCredentials']      = true;
+		$data['hasValidCredentials'] = true;
+
+		return $data;
 	}
 
 	/**

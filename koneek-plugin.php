@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Koneek - OpenAI-Compatible Provider
+ * Plugin Name: Koneek - AI Provider for OpenAI-Compatible
  * Plugin URI: https://wordpress.org/plugins/koneek-multi-provider-ai-gateway/
  * Description: A multi-provider AI gateway for the WordPress WordPress Connectors AI with priority-based automatic fallback & OpenAI-Compatible API.
  * Requires at least: 7.0

@@ -1,4 +1,4 @@
-=== Koneek - OpenAI-Compatible Provider ===
+=== Koneek - AI Provider for OpenAI-Compatible ===
 Contributors: silversh
 Tags: connector, ai connector, wordpress ai, openai compatible, ai
 Requires at least: 7.0
@@ -14,7 +14,7 @@ A multi-provider AI gateway for the WordPress WordPress Connectors AI with prior
 
 == Description ==
 
-Koneek AI connects WordPress to OpenAI, Google Gemini, Anthropic Claude, and any OpenAI-compatible endpoint, all from a single plugin. No need to install separate provider plugins for each service. Built on top of the WordPress Connectors API, API keys are encrypted before being stored in the database.
+Koneek AI connects WordPress to OpenAI, Google Gemini, Anthropic Claude, and any OpenAI-compatible endpoint, all from a single plugin. It supports standard JSON and Server-Sent Events (SSE) responses from AI gateways such as OmniRoute and 9Router. No need to install separate provider plugins for each service. Built on top of the WordPress Connectors API, API keys are encrypted before being stored in the database.
 
 Add as many provider connections as you like, each with its own priority. When the WordPress AI Client makes a request, Koneek routes it to the lowest priority number first and automatically falls back to the next connection if that provider times out or returns an error — even falling back across different providers (for example, OpenAI first, then Anthropic, then Google).
 
@@ -27,6 +27,7 @@ Add as many provider connections as you like, each with its own priority. When t
 * **Secure Storage:** API keys are securely stored in the database using strong AES-256-CBC encryption derived from your WordPress secret salts (`wp-config.php`). Each connection's key is stored in its own option, named after the provider and the connection's name (`koneek_api_key_openai`, `koneek_api_key_custom_openai_nvidia`, `koneek_api_key_anthropic`, ...).
 * **Per-Connection Timeout:** Set how long to wait before falling back to the next provider.
 * **OpenAI Compatibility Layer:** Automatically redirects standard API calls to custom providers, converting newer Responses API formats back to standard Chat Completions.
+* **SSE Response Support:** Parses streamed Server-Sent Events responses from OpenAI-compatible AI gateways, including separate reasoning and final answer content.
 * **Automatic Integration:** Automatically syncs and registers credentials with the WordPress Connectors API, auto-approving connection permissions for AI plugins.
 * **Flexible Model Mapping:** Choose from predefined models or enter your own custom model names.
 
@@ -139,6 +140,8 @@ The terms of service and privacy policy depend on the specific third-party servi
 * Added a Connectors screen summary for all saved Koneek connections with direct access to Koneek settings.
 * Added Koneek connector credentials and preferred-model integration for reliable AI feature detection.
 * Improved model discovery and fallback routing across OpenAI, Anthropic, Google, and OpenAI-compatible connections.
+* Added Server-Sent Events (SSE) response support for OpenAI-compatible AI gateways such as OmniRoute and 9Router, while keeping reasoning content separate from the final answer.
+* Fixed AI plugin settings incorrectly reporting that no valid AI Connector was configured when Koneek already had a saved API key.
 
 = 2.1.0 =
 

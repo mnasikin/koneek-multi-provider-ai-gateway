@@ -169,18 +169,29 @@ class ChatTranslator {
 		$decoded = json_decode( $body_raw, true );
 
 		if ( ! is_array( $decoded ) ) {
+			$parsed = 'openai' === $family
+				? self::parseOpenAiSseResponse( $body_raw )
+				: null;
+		} else {
+			switch ( $family ) {
+				case 'anthropic':
+					$parsed = self::parseAnthropicResponse( $decoded );
+					break;
+				case 'google':
+					$parsed = self::parseGoogleResponse( $decoded );
+					break;
+				case 'openai':
+				default:
+					$parsed = self::parseOpenAiResponse( $decoded );
+					break;
+			}
+		}
+
+		if ( ! is_array( $parsed ) || '' === trim( (string) ( $parsed['text'] ?? '' ) ) ) {
 			return null;
 		}
 
-		switch ( $family ) {
-			case 'anthropic':
-				return self::parseAnthropicResponse( $decoded );
-			case 'google':
-				return self::parseGoogleResponse( $decoded );
-			case 'openai':
-			default:
-				return self::parseOpenAiResponse( $decoded );
-		}
+		return $parsed;
 	}
 
 	/**
@@ -369,10 +380,6 @@ class ChatTranslator {
 			$text = self::stringifyContent( $decoded['choices'][0]['delta']['content'] );
 		}
 
-		if ( '' === $text && isset( $decoded['choices'][0]['message']['reasoning_content'] ) ) {
-			$text = self::stringifyContent( $decoded['choices'][0]['message']['reasoning_content'] );
-		}
-
 		if ( '' === $text && isset( $decoded['output_text'] ) ) {
 			$text = (string) $decoded['output_text'];
 		}
@@ -381,6 +388,88 @@ class ChatTranslator {
 
 		return self::normalizedResponse(
 			(string) ( $decoded['id'] ?? '' ),
+			$text,
+			(int) ( $usage['prompt_tokens'] ?? $usage['input_tokens'] ?? 0 ),
+			(int) ( $usage['completion_tokens'] ?? $usage['output_tokens'] ?? 0 ),
+			(int) ( $usage['total_tokens'] ?? 0 )
+		);
+	}
+
+	/**
+	 * Parses an OpenAI-compatible SSE response into one completed response.
+	 * Reasoning deltas are intentionally ignored; only final content is output.
+	 *
+	 * @param string $body_raw Raw SSE response body.
+	 * @return array|null Normalized response, or null when no SSE events exist.
+	 */
+	private static function parseOpenAiSseResponse( string $body_raw ): ?array {
+		$events      = preg_split( '/\r?\n\r?\n/', trim( $body_raw ) );
+		$id          = '';
+		$text        = '';
+		$final_text  = '';
+		$usage       = array();
+		$event_count = 0;
+
+		foreach ( $events as $event ) {
+			$data_lines = array();
+
+			foreach ( preg_split( '/\r?\n/', $event ) as $line ) {
+				if ( 0 === strpos( $line, 'data:' ) ) {
+					$data_lines[] = ltrim( substr( $line, 5 ) );
+				}
+			}
+
+			if ( empty( $data_lines ) ) {
+				continue;
+			}
+
+			$data = implode( "\n", $data_lines );
+			if ( '[DONE]' === trim( $data ) ) {
+				continue;
+			}
+
+			$decoded = json_decode( $data, true );
+			if ( ! is_array( $decoded ) ) {
+				continue;
+			}
+
+			++$event_count;
+			if ( '' === $id && isset( $decoded['id'] ) ) {
+				$id = (string) $decoded['id'];
+			}
+
+			$choice = $decoded['choices'][0] ?? array();
+			if ( isset( $choice['delta']['content'] ) ) {
+				$text .= self::stringifyContent( $choice['delta']['content'] );
+			}
+			if ( isset( $choice['message']['content'] ) ) {
+				$final_text = self::stringifyContent( $choice['message']['content'] );
+			} elseif ( isset( $choice['text'] ) ) {
+				$final_text = (string) $choice['text'];
+			}
+
+			if ( isset( $decoded['output_text'] ) && is_string( $decoded['output_text'] ) ) {
+				$final_text = $decoded['output_text'];
+			}
+			if ( 'response.output_text.delta' === ( $decoded['type'] ?? '' ) && isset( $decoded['delta'] ) ) {
+				$text .= (string) $decoded['delta'];
+			}
+
+			if ( isset( $decoded['usage'] ) && is_array( $decoded['usage'] ) ) {
+				$usage = $decoded['usage'];
+			}
+		}
+
+		if ( 0 === $event_count ) {
+			return null;
+		}
+
+		if ( '' === $text ) {
+			$text = $final_text;
+		}
+
+		return self::normalizedResponse(
+			$id,
 			$text,
 			(int) ( $usage['prompt_tokens'] ?? $usage['input_tokens'] ?? 0 ),
 			(int) ( $usage['completion_tokens'] ?? $usage['output_tokens'] ?? 0 ),
