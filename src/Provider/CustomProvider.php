@@ -37,16 +37,25 @@ class CustomProvider implements ProviderInterface {
 	private string $compatibility;
 
 	/**
+	 * Provider display name.
+	 *
+	 * @var string
+	 */
+	private string $name;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $slug           The provider slug (e.g., 'custom_openai').
 	 * @param string $custom_api_url The custom API base URL.
 	 * @param string $compatibility  The compatibility mode: 'openai'.
+	 * @param string $name           Provider display name.
 	 */
-	public function __construct( string $slug, string $custom_api_url, string $compatibility = 'openai' ) {
+	public function __construct( string $slug, string $custom_api_url, string $compatibility = 'openai', string $name = 'OpenAI Compatible' ) {
 		$this->slug           = $slug;
 		$this->custom_api_url = $custom_api_url;
 		$this->compatibility  = $compatibility;
+		$this->name           = $name;
 	}
 
 	/**
@@ -64,7 +73,7 @@ class CustomProvider implements ProviderInterface {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'OpenAI Compatible';
+		return $this->name;
 	}
 
 	/**

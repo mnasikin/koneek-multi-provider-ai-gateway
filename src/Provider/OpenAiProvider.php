@@ -63,6 +63,12 @@ class OpenAiProvider implements ProviderInterface {
 			'gpt-4.1-nano' => 'GPT 4.1 Nano',
 			'gpt-4o'       => 'GPT 4o',
 			'gpt-4o-mini'  => 'GPT 4o Mini',
+			'o1'			=> 'o1',
+			'o3-mini'		=> 'o3-mini',
+			'gpt-oss-120b'	=> 'gpt-oss-120b',
+			'gpt-oss-20b'	=> 'gpt-oss-20b',
+			'gpt-oss-safeguard-120b' => 'gpt-oss-safeguard-120b',
+			'gpt-oss-safeguard-20b'  => 'gpt-oss-safeguard-20b',
 		);
 	}
 

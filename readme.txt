@@ -3,7 +3,7 @@ Contributors: silversh
 Tags: connector, ai connector, wordpress ai, openai compatible, ai
 Requires at least: 7.0
 Tested up to: 7.0
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 Requires PHP: 7.4
 License: AGPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/agpl-3.0.html
@@ -133,6 +133,9 @@ The terms of service and privacy policy depend on the specific third-party servi
 
 == Changelog ==
 
+= 2.2.1 =
+* Added provider presets for OpenRouter, Groq, NVIDIA NIM, Cerebras, SambaNova, OpenCode Zen, OpenCode Go, and native Gemini so only the model, API key, and timeout need to be entered manually.
+
 = 2.2.0 =
 
 * Added Koneek as a standalone WordPress AI Connector with its own provider identity and connector logo.
@@ -169,6 +172,6 @@ The terms of service and privacy policy depend on the specific third-party servi
 
 == Upgrade Notice ==
 
-= 2.2.0 =
+= 2.2.1 =
 
-Koneek now works as a standalone AI Connector without requiring a separate provider plugin. This release also improves AI feature detection, model discovery, fallback routing, and connection management from the Koneek settings page.
+Koneek adds provider presets for OpenRouter, Groq, NVIDIA NIM, Cerebras, SambaNova, OpenCode Zen, OpenCode Go, and native Gemini, so setup no longer requires manually entering common base URLs.

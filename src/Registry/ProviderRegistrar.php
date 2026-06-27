@@ -40,7 +40,33 @@ class ProviderRegistrar {
 		'openai'        => 'openai',
 		'anthropic'     => 'anthropic',
 		'google'        => 'google',
+		'openrouter'    => 'openai',
+		'groq'          => 'openai',
+		'nvidia_nim'    => 'openai',
+		'cerebras'      => 'openai',
+		'sambanova'     => 'openai',
+		'opencode_zen'  => 'openai',
+		'opencode_go'   => 'openai',
 		'custom_openai' => 'openai',
+	);
+
+	/**
+	 * Connector IDs that the AI HTTP guard may infer from preset base URLs.
+	 *
+	 * These are approval aliases only. Koneek does not register these presets as
+	 * separate AI Client providers; they continue to use the OpenAI-compatible
+	 * request path through the Koneek gateway.
+	 *
+	 * @var array<string, string>
+	 */
+	private const PRESET_APPROVAL_CONNECTOR_MAP = array(
+		'openrouter'   => 'openrouter',
+		'groq'         => 'groq',
+		'nvidia_nim'   => 'nvidia_nim',
+		'cerebras'     => 'cerebras',
+		'sambanova'    => 'sambanova',
+		'opencode_zen' => 'opencode_zen',
+		'opencode_go'  => 'opencode_go',
 	);
 
 	/**
@@ -127,6 +153,12 @@ class ProviderRegistrar {
 		foreach ( $connections as $connection ) {
 			if ( '' === $connection->getApiKey() ) {
 				continue;
+			}
+
+			$preset_connector_id = self::PRESET_APPROVAL_CONNECTOR_MAP[ $connection->getProvider() ] ?? null;
+			if ( null !== $preset_connector_id ) {
+				$this->approveConnectorForAiPlugin( $preset_connector_id );
+				$this->clearPendingApprovals( $preset_connector_id );
 			}
 
 			$connector_id = $this->getConnectorId( $connection->getProvider() );
@@ -254,13 +286,6 @@ class ProviderRegistrar {
 	 * @return void
 	 */
 	private function approveConnectorForAiPlugin( string $connector_id ): void {
-		$option_key = 'koneek_connector_approvals';
-		$approvals  = get_option( $option_key, array() );
-
-		if ( ! is_array( $approvals ) ) {
-			$approvals = array();
-		}
-
 		$callers = array(
 			'ai/ai.php',
 			'koneek-multi-provider-ai-gateway/koneek-plugin.php',
@@ -269,7 +294,22 @@ class ProviderRegistrar {
 			'ai-provider-for-anthropic/plugin.php',
 		);
 
-		$changed = false;
+		$store_class = 'WordPress\\AI\\Connector_Approval\\Approvals_Store';
+		if ( class_exists( $store_class ) ) {
+			$store = new $store_class();
+			foreach ( $callers as $caller_basename ) {
+				if ( ! $store->is_approved( $caller_basename, $connector_id ) ) {
+					$store->set_approval( $caller_basename, $connector_id, true );
+				}
+			}
+			return;
+		}
+
+		$option_key = 'wpai_connector_approvals';
+		$approvals  = get_option( $option_key, array() );
+		if ( ! is_array( $approvals ) ) {
+			$approvals = array();
+		}
 
 		foreach ( $callers as $caller_basename ) {
 			if ( ! empty( $approvals[ $caller_basename ][ $connector_id ] ) ) {
@@ -281,30 +321,9 @@ class ProviderRegistrar {
 			}
 
 			$approvals[ $caller_basename ][ $connector_id ] = true;
-			$changed = true;
 		}
 
-		if ( $changed ) {
-			update_option( $option_key, $approvals, false );
-		}
-
-		$pending_key = 'koneek_connector_approval_pending';
-		$pending     = get_option( $pending_key, array() );
-
-		if ( is_array( $pending ) && ! empty( $pending ) ) {
-			$cleared = false;
-
-			foreach ( array_keys( $pending ) as $key ) {
-				if ( false !== strpos( (string) $key, '::' . $connector_id ) ) {
-					unset( $pending[ $key ] );
-					$cleared = true;
-				}
-			}
-
-			if ( $cleared ) {
-				update_option( $pending_key, $pending, false );
-			}
-		}
+		update_option( $option_key, $approvals, false );
 	}
 
 	/**
@@ -324,7 +343,18 @@ class ProviderRegistrar {
 	 * @return void
 	 */
 	private function clearPendingApprovals( string $connector_id ): void {
-		$option_key = 'koneek_connector_approval_pending';
+		$store_class = 'WordPress\\AI\\Connector_Approval\\Approvals_Store';
+		if ( class_exists( $store_class ) ) {
+			$store = new $store_class();
+			foreach ( $store->get_pending() as $key => $entry ) {
+				if ( ( $entry['connector_id'] ?? '' ) === $connector_id ) {
+					$store->remove_pending( $key );
+				}
+			}
+			return;
+		}
+
+		$option_key = 'wpai_connector_approval_pending';
 		$pending    = get_option( $option_key, array() );
 
 		if ( ! is_array( $pending ) || empty( $pending ) ) {
