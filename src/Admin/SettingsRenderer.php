@@ -26,13 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SettingsRenderer {
 
 	/**
-	 * Custom provider slugs that require the custom API URL field.
-	 *
-	 * @var string[]
-	 */
-	private const CUSTOM_PROVIDER_SLUGS = array( 'custom_openai' );
-
-	/**
 	 * Renders a single connection card.
 	 *
 	 * @param int|string      $index      The row index (or "__INDEX__" for the JS template).
@@ -51,8 +44,10 @@ class SettingsRenderer {
 		$existing_id    = null !== $connection ? $connection->getId() : '';
 		$display_name   = null !== $connection ? $connection->getDisplayName() : $this->providerLabel( $provider );
 
-		$is_custom_provider = in_array( $provider, self::CUSTOM_PROVIDER_SLUGS, true );
-		$is_saved           = ( '' !== $existing_id );
+		$uses_manual_model = ProviderFactory::usesManualModel( $provider );
+		$requires_url      = ProviderFactory::requiresCustomUrl( $provider );
+		$supports_timeout  = ProviderFactory::supportsTimeout( $provider );
+		$is_saved          = ( '' !== $existing_id );
 
 		// Saved cards start collapsed so the list stays compact.
 		$collapsed = $is_saved;
@@ -122,7 +117,7 @@ class SettingsRenderer {
 		echo '</div>';
 
 		// Custom API URL (custom providers only).
-		$url_style = $is_custom_provider ? '' : 'display:none';
+		$url_style = $requires_url ? '' : 'display:none';
 		echo '<div class="koneek_field_row koneek_row_custom_url" style="' . esc_attr( $url_style ) . '">';
 		echo '<label class="koneek_field_label" for="' . esc_attr( $id . '_custom_api_url' ) . '">' . esc_html__( 'API URL', 'koneek-multi-provider-ai-gateway' ) . '</label>';
 		echo '<div class="koneek_field_input">';
@@ -131,7 +126,7 @@ class SettingsRenderer {
 		echo '</div>';
 
 		// Timeout (custom providers only, compact).
-		$timeout_style = $is_custom_provider ? '' : 'display:none';
+		$timeout_style = $supports_timeout ? '' : 'display:none';
 		echo '<div class="koneek_field_row koneek_row_timeout" style="' . esc_attr( $timeout_style ) . '">';
 		echo '<label class="koneek_field_label" for="' . esc_attr( $id . '_timeout' ) . '">' . esc_html__( 'Timeout (s)', 'koneek-multi-provider-ai-gateway' ) . '</label>';
 		echo '<div class="koneek_field_input">';
@@ -212,14 +207,14 @@ class SettingsRenderer {
 	 * @return void
 	 */
 	private function renderModelField( string $id, string $provider, string $model ): void {
-		$is_custom_provider = in_array( $provider, self::CUSTOM_PROVIDER_SLUGS, true );
+		$uses_manual_model = ProviderFactory::usesManualModel( $provider );
 
 		$provider_instance = ProviderFactory::create( $provider );
 		$models            = ( null !== $provider_instance ) ? $provider_instance->getPredefinedModels() : array();
 		$is_custom_model   = ( '' !== $model && ! array_key_exists( $model, $models ) );
 
 		// Dropdown (known providers).
-		$dropdown_style = $is_custom_provider ? 'display:none' : '';
+		$dropdown_style = $uses_manual_model ? 'display:none' : '';
 		echo '<div class="koneek_model_dropdown_wrap" style="' . esc_attr( $dropdown_style ) . '">';
 		echo '<select id="' . esc_attr( $id . '_model' ) . '" class="koneek_select koneek_select_model">';
 		foreach ( $models as $model_id => $model_label ) {
@@ -227,20 +222,20 @@ class SettingsRenderer {
 			echo esc_html( $model_label );
 			echo '</option>';
 		}
-		echo '<option value="custom"' . selected( $is_custom_model && ! $is_custom_provider, true, false ) . '>' . esc_html__( 'Custom', 'koneek-multi-provider-ai-gateway' ) . '</option>';
+		echo '<option value="custom"' . selected( $is_custom_model && ! $uses_manual_model, true, false ) . '>' . esc_html__( 'Custom', 'koneek-multi-provider-ai-gateway' ) . '</option>';
 		echo '</select>';
 		echo '</div>';
 
 		// Custom model name input (known providers, when "Custom" chosen).
-		$custom_model_style = ( $is_custom_model && ! $is_custom_provider ) ? '' : 'display:none';
+		$custom_model_style = ( $is_custom_model && ! $uses_manual_model ) ? '' : 'display:none';
 		echo '<div class="koneek_custom_model_wrap" style="' . esc_attr( $custom_model_style ) . '">';
-		echo '<input type="text" class="koneek_input koneek_input_custom_model" value="' . esc_attr( ( $is_custom_model && ! $is_custom_provider ) ? $model : '' ) . '" maxlength="100" placeholder="' . esc_attr__( 'Enter custom model name', 'koneek-multi-provider-ai-gateway' ) . '" />';
+		echo '<input type="text" class="koneek_input koneek_input_custom_model" value="' . esc_attr( ( $is_custom_model && ! $uses_manual_model ) ? $model : '' ) . '" maxlength="100" placeholder="' . esc_attr__( 'Enter custom model name', 'koneek-multi-provider-ai-gateway' ) . '" />';
 		echo '</div>';
 
 		// Free-text model input (custom providers).
-		$text_style = $is_custom_provider ? '' : 'display:none';
+		$text_style = $uses_manual_model ? '' : 'display:none';
 		echo '<div class="koneek_model_text_wrap" style="' . esc_attr( $text_style ) . '">';
-		echo '<input type="text" class="koneek_input koneek_input_model_text" value="' . esc_attr( $is_custom_provider ? $model : '' ) . '" maxlength="256" placeholder="' . esc_attr__( 'Enter model name', 'koneek-multi-provider-ai-gateway' ) . '" />';
+		echo '<input type="text" class="koneek_input koneek_input_model_text" value="' . esc_attr( $uses_manual_model ? $model : '' ) . '" maxlength="256" placeholder="' . esc_attr__( 'Enter model name', 'koneek-multi-provider-ai-gateway' ) . '" />';
 		echo '</div>';
 	}
 }

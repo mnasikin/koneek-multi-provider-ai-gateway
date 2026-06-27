@@ -100,6 +100,13 @@ class ConnectionTester
 	{
 		switch ($provider_slug) {
 			case 'openai':
+			case 'openrouter':
+			case 'groq':
+			case 'nvidia_nim':
+			case 'cerebras':
+			case 'sambanova':
+			case 'opencode_zen':
+			case 'opencode_go':
 			case 'custom_openai':
 				return $this->testOpenAiCompatible($base_url, $api_key, $model);
 

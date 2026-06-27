@@ -30,7 +30,7 @@ class GoogleProvider implements ProviderInterface {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Google';
+		return 'Gemini';
 	}
 
 	/**

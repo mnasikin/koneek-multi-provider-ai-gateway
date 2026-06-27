@@ -26,13 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SettingsPage {
 
 	/**
-	 * Custom provider slugs that require the custom API URL field.
-	 *
-	 * @var string[]
-	 */
-	private const CUSTOM_PROVIDER_SLUGS = array( 'custom_openai' );
-
-	/**
 	 * The settings page hook suffix.
 	 *
 	 * @var string
@@ -206,10 +199,11 @@ class SettingsPage {
 			return new \WP_Error( 'koneek_invalid_name', __( 'The name may only contain letters, numbers, and hyphens.', 'koneek-multi-provider-ai-gateway' ) );
 		}
 
-		$is_custom_provider = in_array( $valid_provider, self::CUSTOM_PROVIDER_SLUGS, true );
+		$uses_manual_model = ProviderFactory::usesManualModel( $valid_provider );
+		$requires_url      = ProviderFactory::requiresCustomUrl( $valid_provider );
 
 		// Resolve model value.
-		if ( $is_custom_provider ) {
+		if ( $uses_manual_model ) {
 			$model_value = isset( $raw['model_text'] ) ? sanitize_text_field( $raw['model_text'] ) : '';
 		} else {
 			$model_dropdown = isset( $raw['model'] ) ? sanitize_text_field( $raw['model'] ) : '';
@@ -224,7 +218,7 @@ class SettingsPage {
 
 		// Resolve custom API URL.
 		$custom_api_url = '';
-		if ( $is_custom_provider ) {
+		if ( $requires_url ) {
 			$submitted_url = isset( $raw['custom_api_url'] ) ? esc_url_raw( $raw['custom_api_url'] ) : '';
 			if ( '' === $submitted_url ) {
 				return new \WP_Error( 'koneek_missing_custom_url', __( 'A custom API URL is required for OpenAI-compatible providers.', 'koneek-multi-provider-ai-gateway' ) );
@@ -339,30 +333,45 @@ class SettingsPage {
 			'koneek-settings',
 			$plugin_dir_url . 'src/assets/js/koneek-settings.js',
 			array(),
-			'1.5.0',
+			(string) filemtime( dirname( __DIR__ ) . '/assets/js/koneek-settings.js' ),
 			true
 		);
 
-		$providers  = ProviderFactory::getAvailableProviders();
-		$model_data = array();
-		$labels     = array();
+		$providers              = ProviderFactory::getAvailableProviders();
+		$model_data             = array();
+		$labels                 = array();
+		$manual_model_providers = array();
+		$custom_url_providers   = array();
+		$timeout_providers      = array();
 
 		foreach ( $providers as $slug => $definition ) {
 			$labels[ $slug ]     = $definition['label'];
 			$provider_instance   = ProviderFactory::create( $slug );
 			$model_data[ $slug ] = ( null !== $provider_instance ) ? $provider_instance->getPredefinedModels() : array();
+
+			if ( ProviderFactory::usesManualModel( $slug ) ) {
+				$manual_model_providers[] = $slug;
+			}
+			if ( ProviderFactory::requiresCustomUrl( $slug ) ) {
+				$custom_url_providers[] = $slug;
+			}
+			if ( ProviderFactory::supportsTimeout( $slug ) ) {
+				$timeout_providers[] = $slug;
+			}
 		}
 
 		wp_localize_script(
 			'koneek-settings',
 			'koneek_settings_data',
 			array(
-				'providerModels'  => $model_data,
-				'providerLabels'  => $labels,
-				'customProviders' => self::CUSTOM_PROVIDER_SLUGS,
-				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-				'saveNonce'       => wp_create_nonce( 'koneek_save_connection' ),
-				'strings'         => array(
+				'providerModels'       => $model_data,
+				'providerLabels'       => $labels,
+				'manualModelProviders' => $manual_model_providers,
+				'customUrlProviders'   => $custom_url_providers,
+				'timeoutProviders'     => $timeout_providers,
+				'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
+				'saveNonce'            => wp_create_nonce( 'koneek_save_connection' ),
+				'strings'              => array(
 					'removeConfirm'  => __( 'Remove this provider connection?', 'koneek-multi-provider-ai-gateway' ),
 					'removeUnsaved'  => __( 'Discard this provider connection?', 'koneek-multi-provider-ai-gateway' ),
 					'custom'         => __( 'Custom', 'koneek-multi-provider-ai-gateway' ),

@@ -15,7 +15,9 @@
 	var settingsData = {
 		providerModels: data.providerModels || {},
 		providerLabels: data.providerLabels || {},
-		customProviders: data.customProviders || [ 'custom_openai' ],
+		manualModelProviders: data.manualModelProviders || [ 'custom_openai' ],
+		customUrlProviders: data.customUrlProviders || [ 'custom_openai' ],
+		timeoutProviders: data.timeoutProviders || [ 'custom_openai' ],
 		ajaxUrl: data.ajaxUrl || '/wp-admin/admin-ajax.php',
 		saveNonce: data.saveNonce || '',
 		strings: data.strings || {}
@@ -27,8 +29,16 @@
 		return settingsData.strings[ key ] || fallback;
 	}
 
-	function isCustomProvider( provider ) {
-		return settingsData.customProviders.indexOf( provider ) !== -1;
+	function usesManualModel( provider ) {
+		return settingsData.manualModelProviders.indexOf( provider ) !== -1;
+	}
+
+	function requiresCustomUrl( provider ) {
+		return settingsData.customUrlProviders.indexOf( provider ) !== -1;
+	}
+
+	function supportsTimeout( provider ) {
+		return settingsData.timeoutProviders.indexOf( provider ) !== -1;
 	}
 
 	function show( el ) {
@@ -210,7 +220,7 @@
 		if ( ! providerSelect ) { return; }
 
 		var provider = providerSelect.value;
-		var custom = isCustomProvider( provider );
+		var manualModel = usesManualModel( provider );
 
 		updateDisplayName( row );
 
@@ -220,22 +230,30 @@
 		var urlRow = q( row, '.koneek_row_custom_url' );
 		var timeoutRow = q( row, '.koneek_row_timeout' );
 
-		if ( custom ) {
+		if ( manualModel ) {
 			hide( dropdownWrap );
 			hide( customModelWrap );
 			show( textWrap );
-			show( urlRow );
-			show( timeoutRow );
 		} else {
 			show( dropdownWrap );
 			hide( textWrap );
-			hide( urlRow );
-			hide( timeoutRow );
 
 			if ( isInit !== true ) {
 				hide( customModelWrap );
 				rebuildModelDropdown( row, provider );
 			}
+		}
+
+		if ( requiresCustomUrl( provider ) ) {
+			show( urlRow );
+		} else {
+			hide( urlRow );
+		}
+
+		if ( supportsTimeout( provider ) ) {
+			show( timeoutRow );
+		} else {
+			hide( timeoutRow );
 		}
 	}
 
@@ -248,7 +266,7 @@
 		var providerSelect = q( row, '.koneek_select_provider' );
 		var customModelWrap = q( row, '.koneek_custom_model_wrap' );
 
-		if ( providerSelect && isCustomProvider( providerSelect.value ) ) {
+		if ( providerSelect && usesManualModel( providerSelect.value ) ) {
 			hide( customModelWrap );
 			return;
 		}
@@ -479,7 +497,7 @@
 	 * @return {string}
 	 */
 	function resolveModel( row, provider ) {
-		if ( isCustomProvider( provider ) ) {
+		if ( usesManualModel( provider ) ) {
 			var textEl = q( row, '.koneek_input_model_text' );
 			return textEl ? textEl.value : '';
 		}
@@ -568,7 +586,7 @@
 		formData.append( 'connection[existing_id]', values.existingId );
 
 		// Model is sent under the field name the server expects for this provider.
-		if ( isCustomProvider( values.provider ) ) {
+		if ( usesManualModel( values.provider ) ) {
 			formData.append( 'connection[model_text]', values.model );
 		} else {
 			formData.append( 'connection[model]', values.model );
