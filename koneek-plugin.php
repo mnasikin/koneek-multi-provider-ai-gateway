@@ -5,7 +5,7 @@
  * Description: A multi-provider AI gateway for the WordPress WordPress Connectors AI with priority-based automatic fallback & OpenAI-Compatible API.
  * Requires at least: 7.0
  * Requires PHP: 7.4
- * Version: 2.2.1
+ * Version: 2.2.2
  * Author: silversh
  * Author URI: https://github.com/mnasikin
  * License: AGPL-3.0-or-later

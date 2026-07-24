@@ -47,7 +47,8 @@ class Logger {
 	 * Whether logging is currently enabled.
 	 *
 	 * Logging is disabled by default. It can be turned on for troubleshooting by
-	 * returning true from the 'koneek_logging_enabled' filter.
+	 * defining KONEEK_DEBUG as true in wp-config.php, or by returning true from
+	 * the 'koneek_logging_enabled' filter.
 	 *
 	 * @return bool
 	 */
@@ -55,12 +56,14 @@ class Logger {
 		/**
 		 * Filters whether Koneek debug logging is enabled.
 		 *
-		 * Disabled by default. Return true to enable file logging while
-		 * troubleshooting.
+		 * Disabled by default unless KONEEK_DEBUG is defined as true. Return true
+		 * to enable file logging while troubleshooting.
 		 *
 		 * @param bool $enabled Whether logging is enabled.
 		 */
-		return (bool) apply_filters( 'koneek_logging_enabled', false );
+		$enabled = defined( 'KONEEK_DEBUG' ) && KONEEK_DEBUG;
+
+		return (bool) apply_filters( 'koneek_logging_enabled', $enabled );
 	}
 
 	/**
