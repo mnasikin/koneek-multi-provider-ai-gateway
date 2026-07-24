@@ -2,8 +2,8 @@
 Contributors: silversh
 Tags: connector, ai connector, wordpress ai, openai compatible, ai
 Requires at least: 7.0
-Tested up to: 7.0
-Stable tag: 2.2.1
+Tested up to: 7.0.2
+Stable tag: 2.2.2
 Requires PHP: 7.4
 License: AGPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/agpl-3.0.html
@@ -133,6 +133,10 @@ The terms of service and privacy policy depend on the specific third-party servi
 
 == Changelog ==
 
+= 2.2.2 =
+* Added `KONEEK_DEBUG` support so debug logging can be enabled from `wp-config.php` with `define( 'KONEEK_DEBUG', true );`.
+* Updated compatibility information for WordPress 7.0.2.
+
 = 2.2.1 =
 * Added provider presets for OpenRouter, Groq, NVIDIA NIM, Cerebras, SambaNova, OpenCode Zen, OpenCode Go, and native Gemini so only the model, API key, and timeout need to be entered manually.
 
@@ -171,6 +175,10 @@ The terms of service and privacy policy depend on the specific third-party servi
 * Added per-connection request timeout.
 
 == Upgrade Notice ==
+
+= 2.2.2 =
+
+Koneek debug logging can now be enabled from `wp-config.php` by defining `KONEEK_DEBUG` as true.
 
 = 2.2.1 =
 
