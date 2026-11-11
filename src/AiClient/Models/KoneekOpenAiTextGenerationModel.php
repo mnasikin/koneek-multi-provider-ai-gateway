@@ -169,12 +169,9 @@ class KoneekOpenAiTextGenerationModel extends AbstractApiBasedModel implements T
 		}
 
 		Logger::log(
-			'AI Client response parsed',
+			'Response parsed',
 			array(
-				'model'       => $this->metadata()->getId(),
-				'keys'        => array_keys( $response_data ),
 				'text_length' => strlen( $text ),
-				'summary'     => $this->summarizeForLog( $response_data ),
 			)
 		);
 
@@ -286,50 +283,5 @@ class KoneekOpenAiTextGenerationModel extends AbstractApiBasedModel implements T
 		}
 
 		return trim( implode( "\n", $chunks ) );
-	}
-
-	/**
-	 * Builds a compact response summary for debug logs.
-	 *
-	 * @param mixed $value Response value.
-	 * @param int   $depth Current recursion depth.
-	 * @return mixed
-	 */
-	private function summarizeForLog( $value, int $depth = 0 ) {
-		if ( is_string( $value ) ) {
-			return array(
-				'type'    => 'string',
-				'length'  => strlen( $value ),
-				'preview' => substr( $value, 0, 500 ),
-			);
-		}
-
-		if ( is_scalar( $value ) || null === $value ) {
-			return $value;
-		}
-
-		if ( ! is_array( $value ) ) {
-			return array( 'type' => gettype( $value ) );
-		}
-
-		if ( $depth >= 3 ) {
-			return array(
-				'type'  => 'array',
-				'keys'  => array_slice( array_keys( $value ), 0, 20 ),
-				'count' => count( $value ),
-			);
-		}
-
-		$summary = array(
-			'type'  => 'array',
-			'keys'  => array_slice( array_keys( $value ), 0, 20 ),
-			'count' => count( $value ),
-		);
-
-		foreach ( array_slice( $value, 0, 5, true ) as $key => $item ) {
-			$summary['items'][ $key ] = $this->summarizeForLog( $item, $depth + 1 );
-		}
-
-		return $summary;
 	}
 }

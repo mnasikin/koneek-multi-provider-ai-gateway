@@ -2,8 +2,8 @@
 Contributors: silversh
 Tags: connector, ai connector, wordpress ai, openai compatible, ai
 Requires at least: 7.0
-Tested up to: 7.0.2
-Stable tag: 2.2.2
+Tested up to: 7.1
+Stable tag: 2.3.0
 Requires PHP: 7.4
 License: AGPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/agpl-3.0.html
@@ -14,7 +14,7 @@ A multi-provider AI gateway for the WordPress WordPress Connectors AI with prior
 
 == Description ==
 
-Koneek AI connects WordPress to OpenAI, Google Gemini, Anthropic Claude, and any OpenAI-compatible endpoint, all from a single plugin. It supports standard JSON and Server-Sent Events (SSE) responses from AI gateways such as OmniRoute and 9Router. No need to install separate provider plugins for each service. Built on top of the WordPress Connectors API, API keys are encrypted before being stored in the database.
+Koneek connects WordPress to OpenAI, Google Gemini, Anthropic Claude, and any OpenAI-compatible endpoint, all from a single plugin. It supports standard JSON and Server-Sent Events (SSE) responses from AI gateways such as OmniRoute and 9Router. No need to install separate provider plugins for each service. Built on top of the WordPress Connectors API, API keys are encrypted before being stored in the database.
 
 Add as many provider connections as you like, each with its own priority. When the WordPress AI Client makes a request, Koneek routes it to the lowest priority number first and automatically falls back to the next connection if that provider times out or returns an error — even falling back across different providers (for example, OpenAI first, then Anthropic, then Google).
 
@@ -133,6 +133,16 @@ The terms of service and privacy policy depend on the specific third-party servi
 
 == Changelog ==
 
+= 2.3.0 =
+* Updated WordPress compatibility metadata for 7.1.4.
+* Added a Logging tab to enable or disable gateway diagnostics, view recent activity, and clear the log history.
+* Grouped each gateway request and its fallback attempts into one log block. Logs include the model the gateway called and omit API keys, prompts, and response text.
+* Updated the predefined models for OpenAI, Anthropic, and Gemini, including GPT-6, Claude 5, and Gemini 4, and adjusted gateway request parameters for newer models.
+* Enabled the predefined model dropdown for Gemini with a Custom option for manually entered model IDs.
+* Exposed per-connection timeout settings for OpenAI and Anthropic.
+* Fixed Koneek clearing pending AI connector approval requests for callers that still need approval, including Plugin Check AI Analysis.
+* Added the connector ID and caller to gateway log entries when WordPress blocks a request pending approval.
+
 = 2.2.2 =
 * Added `KONEEK_DEBUG` support so debug logging can be enabled from `wp-config.php` with `define( 'KONEEK_DEBUG', true );`.
 * Updated compatibility information for WordPress 7.0.2.
@@ -175,6 +185,10 @@ The terms of service and privacy policy depend on the specific third-party servi
 * Added per-connection request timeout.
 
 == Upgrade Notice ==
+
+= 2.3.0 =
+
+Manage gateway diagnostics under Settings → Koneek → Logging. This release also refreshes model choices and adds timeout controls for OpenAI and Anthropic.
 
 = 2.2.2 =
 

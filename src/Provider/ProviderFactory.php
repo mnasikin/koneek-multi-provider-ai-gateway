@@ -26,19 +26,20 @@ class ProviderFactory {
 			'type'     => 'known',
 			'base_url' => 'https://api.openai.com/v1',
 			'models'   => array(),
+			'timeout'  => true,
 		),
 		'anthropic'     => array(
 			'label'    => 'Anthropic',
 			'type'     => 'known',
 			'base_url' => 'https://api.anthropic.com/v1',
 			'models'   => array(),
+			'timeout'  => true,
 		),
 		'google'        => array(
 			'label'        => 'Gemini',
 			'type'         => 'known',
 			'base_url'     => 'https://generativelanguage.googleapis.com/v1beta',
 			'models'       => array(),
-			'manual_model' => true,
 			'timeout'      => true,
 		),
 		'openrouter'    => array(

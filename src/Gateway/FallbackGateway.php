@@ -124,7 +124,9 @@ class FallbackGateway {
 		$incoming_sub_format = ChatTranslator::openAiSubFormat( $path );
 		$normalized          = ChatTranslator::parseIncoming( $family, $path, $args );
 
-		return $this->dispatch( $connections, $family, $incoming_sub_format, $normalized, $args );
+		return Logger::recordActivity(
+			fn() => $this->dispatch( $connections, $family, $incoming_sub_format, $normalized, $args )
+		);
 	}
 
 	/**
@@ -229,11 +231,9 @@ class FallbackGateway {
 						'provider'       => $connection->getProvider(),
 						'status'         => wp_remote_retrieve_response_code( $result ),
 						'body_length'    => strlen( $body_raw ),
-						'body_preview'   => substr( $body_raw, 0, 1000 ),
 						'parsed_summary' => is_array( $parsed )
 							? array(
 								'text_length' => strlen( (string) ( $parsed['text'] ?? '' ) ),
-								'text_preview' => substr( (string) ( $parsed['text'] ?? '' ), 0, 500 ),
 								'usage'       => $parsed['usage'] ?? array(),
 							)
 							: null,
@@ -270,14 +270,19 @@ class FallbackGateway {
 					$this->extractError( $result )
 				);
 
-			Logger::log(
-				'Connection failed; trying next',
-				array(
-					'id'       => $connection->getId(),
-					'priority' => $connection->getPriority(),
-					'error'    => $last_error->get_error_message(),
-				)
+			$error_code = $last_error->get_error_code();
+			$context    = array(
+				'id'         => $connection->getId(),
+				'priority'   => $connection->getPriority(),
+				'error_code' => $error_code,
 			);
+			if ( 'wpai_connector_not_approved' === $error_code ) {
+				$approval = $last_error->get_error_data();
+				$context['connector_id'] = $approval['connector_id'] ?? '';
+				$context['caller']       = $approval['caller']['basename'] ?? '';
+			}
+
+			Logger::log( 'Connection failed; trying next', $context );
 		}
 
 		if ( null === $last_error ) {
@@ -307,9 +312,7 @@ class FallbackGateway {
 				'id'       => $connection->getId(),
 				'provider' => $connection->getProvider(),
 				'model'    => $connection->getModel(),
-				'url'      => $built['url'],
 				'timeout'  => $args['timeout'],
-				'payload'  => $this->summarizeJsonForLog( (string) ( $args['body'] ?? '' ) ),
 			)
 		);
 
@@ -384,77 +387,6 @@ class FallbackGateway {
 			'cookies'  => array(),
 			'filename' => null,
 		);
-	}
-
-	/**
-	 * Creates a compact, non-secret summary of a JSON request/response body.
-	 *
-	 * @param string $json Raw JSON body.
-	 * @return array<string, mixed>
-	 */
-	private function summarizeJsonForLog( string $json ): array {
-		if ( '' === $json ) {
-			return array(
-				'length' => 0,
-				'keys'   => array(),
-			);
-		}
-
-		$decoded = json_decode( $json, true );
-
-		if ( ! is_array( $decoded ) ) {
-			return array(
-				'length'  => strlen( $json ),
-				'preview' => substr( $json, 0, 1000 ),
-			);
-		}
-
-		return array(
-			'length'  => strlen( $json ),
-			'keys'    => array_keys( $decoded ),
-			'summary' => $this->summarizeValueForLog( $decoded ),
-		);
-	}
-
-	/**
-	 * Recursively summarizes a value for logs.
-	 *
-	 * @param mixed $value The value to summarize.
-	 * @param int   $depth Current depth.
-	 * @return mixed
-	 */
-	private function summarizeValueForLog( $value, int $depth = 0 ) {
-		if ( is_string( $value ) ) {
-			return array(
-				'type'    => 'string',
-				'length'  => strlen( $value ),
-				'preview' => substr( $value, 0, 500 ),
-			);
-		}
-
-		if ( is_scalar( $value ) || null === $value ) {
-			return $value;
-		}
-
-		if ( ! is_array( $value ) ) {
-			return array( 'type' => gettype( $value ) );
-		}
-
-		$summary = array(
-			'type'  => 'array',
-			'keys'  => array_slice( array_keys( $value ), 0, 20 ),
-			'count' => count( $value ),
-		);
-
-		if ( $depth >= 3 ) {
-			return $summary;
-		}
-
-		foreach ( array_slice( $value, 0, 8, true ) as $key => $item ) {
-			$summary['items'][ $key ] = $this->summarizeValueForLog( $item, $depth + 1 );
-		}
-
-		return $summary;
 	}
 
 	/**

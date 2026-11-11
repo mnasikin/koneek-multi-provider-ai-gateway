@@ -49,6 +49,11 @@ class OpenAiProvider implements ProviderInterface {
 	 */
 	public function getPredefinedModels(): array {
 		return array(
+			'gpt-6-astra'   => 'GPT-6 Astra',
+			'gpt-6.1-sol'   => 'GPT-6.1 Sol',
+			'gpt-6.1-terra' => 'GPT-6.1 Terra',
+			'gpt-6-sol'     => 'GPT-6 Sol',
+			'gpt-6-luna'    => 'GPT-6 Luna',
 			'gpt-5.5'      => 'GPT 5.5',
 			'gpt-5.4'      => 'GPT 5.4',
 			'gpt-5.4-mini' => 'GPT 5.4 Mini',
@@ -70,6 +75,13 @@ class OpenAiProvider implements ProviderInterface {
 			'gpt-oss-safeguard-120b' => 'gpt-oss-safeguard-120b',
 			'gpt-oss-safeguard-20b'  => 'gpt-oss-safeguard-20b',
 		);
+	}
+
+	/**
+	 * Whether the model uses GPT-6 Chat Completions parameters.
+	 */
+	public static function isGpt6Model( string $model ): bool {
+		return 1 === preg_match( '/^gpt-6(?:\.\d+)?-/', $model );
 	}
 
 	/**

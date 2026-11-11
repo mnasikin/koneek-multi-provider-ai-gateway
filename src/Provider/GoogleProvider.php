@@ -49,6 +49,12 @@ class GoogleProvider implements ProviderInterface {
 	 */
 	public function getPredefinedModels(): array {
 		return array(
+			'gemini-4-carbon'      => 'Gemini 4 Carbon',
+			'gemini-4-argon'       => 'Gemini 4 Argon',
+			'gemini-3.8-flash'     => 'Gemini 3.8 Flash',
+			'gemini-3.7-flash'     => 'Gemini 3.7 Flash',
+			'gemini-3.6-flash'     => 'Gemini 3.6 Flash',
+			'gemini-3.5-flash-lite' => 'Gemini 3.5 Flash Lite',
 			'gemini-3.5-flash'      => 'Gemini 3.5 Flash',
 			'gemini-3.1-pro-preview' => 'Gemini 3.1 Pro Preview',
 			'gemini-3.1-flash'	=> 'Gemini 3.1 Flash',
