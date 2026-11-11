@@ -11,6 +11,7 @@
 namespace Koneek\Admin;
 
 use Koneek\Provider\ProviderFactory;
+use Koneek\Provider\OpenAiProvider;
 
 if (!defined('ABSPATH'))
 	exit;
@@ -100,6 +101,8 @@ class ConnectionTester
 	{
 		switch ($provider_slug) {
 			case 'openai':
+				return $this->testOpenAiCompatible($base_url, $api_key, $model, OpenAiProvider::isGpt6Model($model));
+
 			case 'openrouter':
 			case 'groq':
 			case 'nvidia_nim':
@@ -124,16 +127,18 @@ class ConnectionTester
 	/**
 	 * Tests an OpenAI-compatible API endpoint.
 	 *
-	 * Sends a minimal chat completion request with max_tokens=1.
+	 * Sends a minimal chat completion request.
 	 *
 	 * @param string $base_url The API base URL.
 	 * @param string $api_key  The API key.
 	 * @param string $model    The model identifier.
+	 * @param bool   $gpt6     Whether to use GPT-6 request parameters.
 	 * @return string|\WP_Error Success message or error.
 	 */
-	private function testOpenAiCompatible(string $base_url, string $api_key, string $model)
+	private function testOpenAiCompatible(string $base_url, string $api_key, string $model, bool $gpt6 = false)
 	{
 		$url = rtrim($base_url, '/') . '/chat/completions';
+		$token_limit_field = $gpt6 ? 'max_completion_tokens' : 'max_tokens';
 
 		$response = wp_remote_post(
 			$url,
@@ -153,7 +158,7 @@ class ConnectionTester
 								'content' => 'Hi',
 							),
 						),
-						'max_tokens' => 1,
+						$token_limit_field => $gpt6 ? 16 : 1,
 					)
 				),
 			)

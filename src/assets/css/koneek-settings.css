@@ -31,6 +31,10 @@
 	max-width: 620px;
 }
 
+.koneek_tab_intro {
+	margin: 12px 0;
+}
+
 /* Card list is a responsive grid; collapsed tiles flow side by side, while an
    expanded card spans the whole row. */
 .koneek_connections {

@@ -337,7 +337,7 @@ class ProviderRegistrar {
 	}
 
 	/**
-	 * Clears any pending approval requests for the configured connector.
+	 * Clears pending requests only for callers already approved for the connector.
 	 *
 	 * @param string $connector_id The connector ID to clear pending entries for.
 	 * @return void
@@ -347,7 +347,8 @@ class ProviderRegistrar {
 		if ( class_exists( $store_class ) ) {
 			$store = new $store_class();
 			foreach ( $store->get_pending() as $key => $entry ) {
-				if ( ( $entry['connector_id'] ?? '' ) === $connector_id ) {
+				$caller = $entry['caller_basename'] ?? '';
+				if ( ( $entry['connector_id'] ?? '' ) === $connector_id && is_string( $caller ) && '' !== $caller && $store->is_approved( $caller, $connector_id ) ) {
 					$store->remove_pending( $key );
 				}
 			}
@@ -361,7 +362,8 @@ class ProviderRegistrar {
 			return;
 		}
 
-		$changed = false;
+		$changed   = false;
+		$approvals = get_option( 'wpai_connector_approvals', array() );
 
 		foreach ( $pending as $key => $entry ) {
 			if ( ! is_array( $entry ) ) {
@@ -370,7 +372,8 @@ class ProviderRegistrar {
 
 			$entry_connector = $entry['connector_id'] ?? '';
 
-			if ( $entry_connector === $connector_id ) {
+			$caller = $entry['caller_basename'] ?? '';
+			if ( $entry_connector === $connector_id && is_string( $caller ) && ! empty( $approvals[ $caller ][ $connector_id ] ) ) {
 				unset( $pending[ $key ] );
 				$changed = true;
 			}

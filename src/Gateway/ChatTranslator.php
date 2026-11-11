@@ -26,6 +26,7 @@
 namespace Koneek\Gateway;
 
 use Koneek\Connection\Connection;
+use Koneek\Provider\OpenAiProvider;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -245,10 +246,12 @@ class ChatTranslator {
 			);
 		}
 
+		$max_tokens = $body['max_completion_tokens'] ?? $body['max_tokens'] ?? null;
+
 		return self::normalized(
 			$system,
 			$messages,
-			isset( $body['max_tokens'] ) ? (int) $body['max_tokens'] : null,
+			null !== $max_tokens ? (int) $max_tokens : null,
 			isset( $body['temperature'] ) ? (float) $body['temperature'] : null,
 			isset( $body['top_p'] ) ? (float) $body['top_p'] : null
 		);
@@ -333,16 +336,19 @@ class ChatTranslator {
 			$messages[] = $message;
 		}
 
-		$payload = array(
-			'model'      => $connection->getModel(),
-			'messages'   => $messages,
-			'max_tokens' => $normalized['max_tokens'] ?? self::DEFAULT_MAX_TOKENS,
+		$model             = $connection->getModel();
+		$gpt6              = 'openai' === $connection->getProvider() && OpenAiProvider::isGpt6Model( $model );
+		$token_limit_field = $gpt6 ? 'max_completion_tokens' : 'max_tokens';
+		$payload           = array(
+			'model'            => $model,
+			'messages'         => $messages,
+			$token_limit_field => $normalized['max_tokens'] ?? self::DEFAULT_MAX_TOKENS,
 		);
 
-		if ( null !== $normalized['temperature'] ) {
+		if ( ! $gpt6 && null !== $normalized['temperature'] ) {
 			$payload['temperature'] = $normalized['temperature'];
 		}
-		if ( null !== $normalized['top_p'] ) {
+		if ( ! $gpt6 && null !== $normalized['top_p'] ) {
 			$payload['top_p'] = $normalized['top_p'];
 		}
 
@@ -583,8 +589,10 @@ class ChatTranslator {
 	 * @return array{url: string, args: array}
 	 */
 	private static function buildAnthropicRequest( Connection $connection, array $normalized ): array {
-		$payload = array(
-			'model'      => $connection->getModel(),
+		$model             = $connection->getModel();
+		$supports_sampling = ! preg_match( '/^claude-(?:(?:fable|mythos|opus|sonnet|haiku)-5(?:-|$)|opus-4-[78](?:-|$))/', $model );
+		$payload           = array(
+			'model'      => $model,
 			'messages'   => $normalized['messages'],
 			'max_tokens' => $normalized['max_tokens'] ?? self::DEFAULT_MAX_TOKENS,
 		);
@@ -592,10 +600,10 @@ class ChatTranslator {
 		if ( '' !== $normalized['system'] ) {
 			$payload['system'] = $normalized['system'];
 		}
-		if ( null !== $normalized['temperature'] ) {
+		if ( $supports_sampling && null !== $normalized['temperature'] ) {
 			$payload['temperature'] = $normalized['temperature'];
 		}
-		if ( null !== $normalized['top_p'] ) {
+		if ( $supports_sampling && null !== $normalized['top_p'] ) {
 			$payload['top_p'] = $normalized['top_p'];
 		}
 
@@ -755,14 +763,15 @@ class ChatTranslator {
 			);
 		}
 
+		$supports_sampling = ! preg_match( '/^gemini-(?:4-|3\.(?:[678]-flash|5-flash-lite)(?:-|$))/', $connection->getModel() );
 		$generation_config = array();
 		if ( null !== $normalized['max_tokens'] ) {
 			$generation_config['maxOutputTokens'] = $normalized['max_tokens'];
 		}
-		if ( null !== $normalized['temperature'] ) {
+		if ( $supports_sampling && null !== $normalized['temperature'] ) {
 			$generation_config['temperature'] = $normalized['temperature'];
 		}
-		if ( null !== $normalized['top_p'] ) {
+		if ( $supports_sampling && null !== $normalized['top_p'] ) {
 			$generation_config['topP'] = $normalized['top_p'];
 		}
 		if ( ! empty( $generation_config ) ) {

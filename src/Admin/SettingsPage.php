@@ -15,6 +15,7 @@ namespace Koneek\Admin;
 use Koneek\Connection\Connection;
 use Koneek\Connection\ConnectionRepository;
 use Koneek\Provider\ProviderFactory;
+use Koneek\Utils\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -80,7 +81,7 @@ class SettingsPage {
 	}
 
 	/**
-	 * Registers the per-card AJAX handlers.
+	 * Registers the settings submission handlers.
 	 *
 	 * Called unconditionally during boot (not on admin_init), because
 	 * admin-ajax.php requests do not reliably fire admin_init. Registering here
@@ -91,6 +92,29 @@ class SettingsPage {
 	public function registerAjaxHandlers(): void {
 		add_action( 'wp_ajax_koneek_save_connection', array( $this, 'handleSaveConnection' ) );
 		add_action( 'wp_ajax_koneek_delete_connection', array( $this, 'handleDeleteConnection' ) );
+		add_action( 'admin_post_koneek_save_logging', array( $this, 'handleSaveLogging' ) );
+	}
+
+	/**
+	 * Updates the logging preference or clears the stored log.
+	 */
+	public function handleSaveLogging(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'koneek-multi-provider-ai-gateway' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( 'koneek_save_logging' );
+		if ( isset( $_POST['clear_log'] ) && '1' === $_POST['clear_log'] ) {
+			if ( ! Logger::clear() ) {
+				wp_die( esc_html__( 'Could not clear the logs.', 'koneek-multi-provider-ai-gateway' ), '', array( 'response' => 500 ) );
+			}
+		} else {
+			$enabled = isset( $_POST['enabled'] ) && '1' === $_POST['enabled'];
+			update_option( Logger::ENABLED_OPTION, $enabled ? '1' : '0' );
+		}
+
+		wp_safe_redirect( admin_url( 'options-general.php?page=koneek_settings&tab=logging' ) );
+		exit;
 	}
 
 	/**
@@ -272,15 +296,30 @@ class SettingsPage {
 			return;
 		}
 
-		$connections = $this->repository->allWithoutKeys();
-		$test_nonce  = wp_create_nonce( 'koneek_test_connection' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This fixed tab selector only changes the view.
+		$logging_tab  = isset( $_GET['tab'] ) && 'logging' === $_GET['tab'];
+		$settings_url = admin_url( 'options-general.php?page=koneek_settings' );
 
 		echo '<div class="wrap koneek_settings_wrap">';
 		echo '<div class="koneek_header">';
 		echo '<h1 class="koneek_title">' . esc_html( get_admin_page_title() ) . '</h1>';
-		echo '<p class="koneek_subtitle">' . esc_html__( 'Add one or more AI providers. Requests use the lowest priority number first and fall back to the next when a provider times out or errors. Each card is saved on its own.', 'koneek-multi-provider-ai-gateway' ) . '</p>';
 		echo '</div>';
 
+		echo '<nav class="nav-tab-wrapper" aria-label="' . esc_attr__( 'Koneek settings', 'koneek-multi-provider-ai-gateway' ) . '">';
+		echo '<a href="' . esc_url( $settings_url ) . '" ' . ( $logging_tab ? 'class="nav-tab"' : 'class="nav-tab nav-tab-active" aria-current="page"' ) . '>' . esc_html__( 'Connections', 'koneek-multi-provider-ai-gateway' ) . '</a>';
+		echo '<a href="' . esc_url( add_query_arg( 'tab', 'logging', $settings_url ) ) . '" ' . ( $logging_tab ? 'class="nav-tab nav-tab-active" aria-current="page"' : 'class="nav-tab"' ) . '>' . esc_html__( 'Logging', 'koneek-multi-provider-ai-gateway' ) . '</a>';
+		echo '</nav>';
+
+		if ( $logging_tab ) {
+			$this->renderLogging();
+			echo '</div>'; // .wrap
+			return;
+		}
+
+		$connections = $this->repository->allWithoutKeys();
+		$test_nonce  = wp_create_nonce( 'koneek_test_connection' );
+
+		echo '<p class="koneek_subtitle koneek_tab_intro">' . esc_html__( 'Add one or more AI providers. Requests use the lowest priority number first and fall back to the next when a provider times out or errors. Each card is saved on its own.', 'koneek-multi-provider-ai-gateway' ) . '</p>';
 		echo '<div id="koneek_connections" class="koneek_connections">';
 
 		if ( empty( $connections ) ) {
@@ -307,6 +346,37 @@ class SettingsPage {
 		echo '</script>';
 
 		echo '</div>'; // .wrap
+	}
+
+	/**
+	 * Shows the logging control and recent events on the Logging tab.
+	 */
+	private function renderLogging(): void {
+		$enabled = Logger::isEnabled();
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="koneek_save_logging">';
+		echo '<input type="hidden" name="enabled" value="' . ( $enabled ? '0' : '1' ) . '">';
+		wp_nonce_field( 'koneek_save_logging' );
+		echo '<p>' . ( $enabled
+			? esc_html__( 'Logging is enabled.', 'koneek-multi-provider-ai-gateway' )
+			: esc_html__( 'Logging is disabled.', 'koneek-multi-provider-ai-gateway' ) ) . '</p>';
+		submit_button(
+			$enabled ? __( 'Disable logging', 'koneek-multi-provider-ai-gateway' ) : __( 'Enable logging', 'koneek-multi-provider-ai-gateway' ),
+			$enabled ? 'secondary' : 'primary',
+			'submit',
+			false
+		);
+		echo ' <button type="submit" class="button" name="clear_log" value="1">' . esc_html__( 'Clear logs', 'koneek-multi-provider-ai-gateway' ) . '</button>';
+		echo '</form>';
+
+		if ( $enabled ) {
+			$log = Logger::getRecentLog();
+			echo '<h2><label for="koneek_recent_log">' . esc_html__( 'Recent gateway log', 'koneek-multi-provider-ai-gateway' ) . '</label></h2>';
+			echo '<textarea id="koneek_recent_log" class="large-text code" rows="16" readonly>' . esc_textarea( '' === $log
+				? __( 'No events recorded yet.', 'koneek-multi-provider-ai-gateway' )
+				: $log ) . '</textarea>';
+		}
 	}
 
 	/**
